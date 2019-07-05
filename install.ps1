@@ -1,20 +1,6 @@
 set-executionpolicy undefined -scope process -force
 set-executionpolicy unrestricted -scope current -force
 
-function install-registryKey($path, $name, $value, $type) {
-    if(!(test-path $path)) {
-        new-item -path $path -force | out-null
-    }
-     
-    try {
-        remove-itemProperty -LiteralPath $path -name $name -ErrorAction SilentlyContinue | out-null
-    } catch {
-    
-    }
-    
-    new-itemProperty -LiteralPath $path -name $name -value $value -propertyType $type -force -ErrorAction SilentlyContinue | out-null
-}
-
 # Install applications from Chocolatey
 if ((test-path C:\ProgramData\chocolatey\bin\choco.exe) -eq $false) {
     write-host "Installing Chocolatey" 
@@ -52,7 +38,7 @@ $packages = @(
     'nugetpackageexplorer',
     'oldcalc',
     'postman',
-    'powershell',
+    'powershell-core',
     'putty',
     'reshack',
     'rktools.2003',
@@ -77,12 +63,13 @@ $packages = @(
 
 write-host "Install Packages"
 foreach ($package in $packages) {
-    choco install $package --limit-output --yes
+    #choco install $package --limit-output --yes
 }
 
 
 write-host "Importing Registry Settings"
 reg import .\RegistrySettings\AquaSnapSettings.reg
+reg import .\CleanupExplorerContextMenus.reg
 reg import .\RegistrySettings\CmdAutoRunAlias.reg
 reg import .\RegistrySettings\NoLockScreen.reg
 reg import .\RegistrySettings\RemoveAllUserFolders.reg
@@ -91,29 +78,36 @@ reg import .\RegistrySettings\SetDriveIcons.reg
 
 write-host "Adding Open With Registry Settings"
 # The command paths must be hard coded and can't use environment variables so we have to add these this way
-install-registryKey 'HKCU:\Software\Classes\*\shell\GVim' '(default)' 'Open with GVim' 'String'
-install-registryKey 'HKCU:\Software\Classes\*\shell\GVim' 'Icon' '%userprofile%\settings\icons\vim.ico' 'String'
-install-registryKey 'HKCU:\Software\Classes\*\shell\GVim\command' '(default)' '$env:userprofile\vim\vim80\gvim.exe "%1"' 'String'
-install-registryKey 'HKCU:\Software\Classes\*\shell\Notepad' '(default)' 'Open with Notepad' 'String'
-install-registryKey 'HKCU:\Software\Classes\*\shell\Notepad\command' '(default)' 'c:\windows\system32\notepad.exe "%1"' 'String'
+new-item -force -ErrorAction SilentlyContinue 'HKCU:\Software\Classes\*\shell\GVim' | out-null
+new-item -force -ErrorAction SilentlyContinue 'HKCU:\Software\Classes\*\shell\GVim\command' | out-null
+new-item -force -ErrorAction SilentlyContinue 'HKCU:\Software\Classes\*\shell\Notepad' | out-null
+new-item -force -ErrorAction SilentlyContinue 'HKCU:\Software\Classes\*\shell\Notepad\command' | out-null
+
+new-itemProperty -force -ErrorAction SilentlyContinue -propertyType 'String' -LiteralPath 'HKCU:\Software\Classes\*\shell\GVim'             -name '(default)'  -value 'Open with GVim' | out-null
+new-itemProperty -force -ErrorAction SilentlyContinue -propertyType 'String' -LiteralPath 'HKCU:\Software\Classes\*\shell\GVim'             -name 'Icon'       -value '%userprofile%\settings\icons\vim.ico' | out-null
+new-itemProperty -force -ErrorAction SilentlyContinue -propertyType 'String' -LiteralPath 'HKCU:\Software\Classes\*\shell\GVim\command'     -name '(default)'  -value '$env:userprofile\vim\vim80\gvim.exe "%1"' | out-null
+new-itemProperty -force -ErrorAction SilentlyContinue -propertyType 'String' -LiteralPath 'HKCU:\Software\Classes\*\shell\Notepad'          -name '(default)'  -value 'Open with Notepad' | out-null
+new-itemProperty -force -ErrorAction SilentlyContinue -propertyType 'String' -LiteralPath 'HKCU:\Software\Classes\*\shell\Notepad\command'  -name '(default)'  -value 'c:\windows\system32\notepad.exe "%1"' | out-null
 
 
-write-host "Adding custom environment variables"
-setx src $srcDir
-setx home $env:userprofile
-setx ConEmuPromptNames NO
-
-
-write-host "Creating Directories"
+write-host "Setting variales"
 $srcDir="d:\src"
 $settingsDir="$env:userprofile\settings"
 $iconsDir="$settingsDir\icons"
 
-try { md -force $srcDir } catch { write-host $_.exception.message }
-try { md -force $settingsDir } catch { write-host $_.exception.message }
-try { md -force $iconsDir } catch { write-host $_.exception.message }
-try { md -force "$env:userprofile\.vim" } catch { write-host $_.exception.message }
-try { md -force "$env:userprofile\.tmp" } catch { write-host $_.exception.message }
+
+write-host "Adding custom environment variables"
+setx src $srcDir | out-null
+setx home $env:userprofile | out-null
+setx ConEmuPromptNames NO | out-null
+
+
+write-host "Creating Directories"
+try { md -force $srcDir | out-null } catch { write-host $_.exception.message }
+try { md -force $settingsDir | out-null } catch { write-host $_.exception.message }
+try { md -force $iconsDir | out-null } catch { write-host $_.exception.message }
+try { md -force "$env:userprofile\.vim" | out-null } catch { write-host $_.exception.message }
+try { md -force "$env:userprofile\.tmp" | out-null } catch { write-host $_.exception.message }
 
 
 write-host "Copy Files"
