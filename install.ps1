@@ -75,7 +75,7 @@ if ($skipInstall -eq $false) {
 
 write-host "Importing Registry Settings"
 reg import .\RegistrySettings\AquaSnapSettings.reg
-reg import .\CleanupExplorerContextMenus.reg
+reg import .\RegistrySettings\CleanupExplorerContextMenus.reg
 reg import .\RegistrySettings\CmdAutoRunAlias.reg
 reg import .\RegistrySettings\NoLockScreen.reg
 reg import .\RegistrySettings\RemoveAllUserFolders.reg
