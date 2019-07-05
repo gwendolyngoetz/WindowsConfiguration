@@ -1,3 +1,7 @@
+param(
+  [switch] $skipInstall
+)
+
 set-executionpolicy undefined -scope process -force
 set-executionpolicy unrestricted -scope current -force
 
@@ -61,9 +65,11 @@ $packages = @(
 )
 
 
-write-host "Install Packages"
-foreach ($package in $packages) {
-    #choco install $package --limit-output --yes
+if ($skipInstall -eq $false) {
+    write-host "Install Packages"
+    foreach ($package in $packages) {
+        choco install $package --limit-output --yes
+    }
 }
 
 
@@ -75,6 +81,7 @@ reg import .\RegistrySettings\NoLockScreen.reg
 reg import .\RegistrySettings\RemoveAllUserFolders.reg
 reg import .\RegistrySettings\SaveChrome.reg
 reg import .\RegistrySettings\SetDriveIcons.reg
+
 
 write-host "Adding Open With Registry Settings"
 # The command paths must be hard coded and can't use environment variables so we have to add these this way
@@ -113,9 +120,8 @@ try { md -force "$env:userprofile\.tmp" | out-null } catch { write-host $_.excep
 write-host "Copy Files"
 cp .\alias.cmd $env:userprofile\alias.cmd
 cp .\icons\* $env:userprofile\settings\icons
+cp .\ConEmu\ConEmu.xml $env:appdata
+
 
 write-host "DONE"
-
-
-
 
