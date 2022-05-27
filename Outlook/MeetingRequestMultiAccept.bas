@@ -1,30 +1,33 @@
-Attribute VB_Name = "MeetingRequestMultiAccept"
+'Attribute VB_Name = "MeetingRequestMultiAccept"
 Option Explicit
 
-Sub ProcessMeetingSelection() As Outlook.MailItem
+Sub ProcessMeetingSelection()
     Dim myOlExp As Outlook.Explorer
     Dim myOlSel As Outlook.Selection
+    Dim myMailItem As Object
+    Dim i As Integer
     
     Set myOlExp = Application.ActiveExplorer
     Set myOlSel = myOlExp.Selection
     
-    For Each myMailItem To myOlSel.Items
-        If  myMailItem.Class == OlObjectClass.olMeetingRequest Then
-            ProcessMeetingRequest(myMailItem)
-        ElseIf myMailItem.Class == OlObjectClass.olMeetingCancellation Then
-            ProcessMeetingCancellation(myMailItem)
+    For i = 1 To myOlSel.Count
+        Set myMailItem = myOlSel.Item(i)
+        If myMailItem.Class = OlObjectClass.olMeetingRequest Then
+            Call ProcessMeetingRequest(myMailItem)
+        ElseIf myMailItem.Class = OlObjectClass.olMeetingCancellation Then
+            Call ProcessMeetingCancellation(myMailItem)
         End If
-    Next
+    Next i
 End Sub
 
-Sub ProcessMeetingRequest(myMailItem as Outlook.MailItem)
+Sub ProcessMeetingRequest(myMailItem As Object)
     Dim myAppt As AppointmentItem
     Dim myResponse As Object
 
     Set myAppt = myMailItem.GetAssociatedAppointment(True)
     Set myResponse = myAppt.Respond(olMeetingAccepted, True)
 
-    myMailItem.unread = False
+    myMailItem.UnRead = False
     myMailItem.Delete
 
     Set myAppt = Nothing
@@ -32,12 +35,13 @@ Sub ProcessMeetingRequest(myMailItem as Outlook.MailItem)
 End Sub
 
 
-Sub ProcessMeetingCancellation(myMailItem as Outlook.MailItem)
+Sub ProcessMeetingCancellation(myMailItem As Object)
     Dim myAppt As AppointmentItem
 
     Set myAppt = myMailItem.GetAssociatedAppointment(True)
-
-    myMailItem.unread = False
+    myAppt.Delete
+    
+    myMailItem.UnRead = False
     myMailItem.Delete
 
     Set myAppt = Nothing
